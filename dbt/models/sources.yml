@@ -1,0 +1,19 @@
+version: 2
+
+sources:
+  - name: bronze
+    database: workspace
+    schema: "{{ var('bronze_schema') }}"
+    tables:
+      - name: installs
+      - name: events
+      - name: offers
+      - name: user_profile
+
+  - name: silver
+    database: workspace
+    schema: "{{ var('silver_schema') }}"
+    tables:
+      - name: installs
+      - name: events
+      - name: offers

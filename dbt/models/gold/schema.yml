@@ -1,0 +1,14 @@
+version: 2
+
+models:
+  - name: daily_metrics
+    tests:
+      - is_valid:
+          condition: "installs >= 0 and app_open_users >= 0 and offer_view_users >= 0 and offer_start_users >= 0 and goal_reached_users >= 0 and reward_paid_users >= 0 and reward_payouts >= 0 and reward_cost_eur >= 0"
+    columns:
+      - name: day
+        tests: [not_null]
+      - name: country
+        tests: [not_null]
+      - name: platform
+        tests: [not_null]

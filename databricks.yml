@@ -6,19 +6,72 @@ variables:
     default: workspace
   schema:
     default: offer_pipeline
+  bronze_schema:
+    default: bronze
+  silver_schema:
+    default: silver
+  gold_schema:
+    default: gold
 
 resources:
   pipelines:
     bronze_ingestion:
       name: exmox-bronze-ingestion
       catalog: ${var.catalog}
-      schema: bronze
+      schema: ${var.bronze_schema}
       serverless: true
       configuration:
         landing_path: /Volumes/${var.catalog}/${var.schema}/landing
       libraries:
         - file:
             path: src/bronze_ingestion.py
+
+  dashboards:
+    offer_performance:
+      display_name: Exmox Offer Performance
+      file_path: dashboards/offer_performance.lvdash.json
+      warehouse_id: 8543b9f58a337ad4
+      parent_path: ${workspace.file_path}
+      embed_credentials: false
+
+  jobs:
+    offer_pipeline:
+      name: exmox-offer-pipeline
+      max_concurrent_runs: 1
+      tasks:
+        - task_key: ingest_bronze
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.bronze_ingestion.id}
+        - task_key: transform_silver
+          depends_on:
+            - task_key: ingest_bronze
+          dbt_task:
+            commands:
+              - dbt build --select path:models/silver --vars '{"bronze_schema":"${var.bronze_schema}"}'
+            project_directory: ${workspace.file_path}/dbt
+            source: WORKSPACE
+            warehouse_id: 8543b9f58a337ad4
+            catalog: ${var.catalog}
+            schema: ${var.silver_schema}
+          environment_key: serverless
+        - task_key: transform_gold
+          depends_on:
+            - task_key: transform_silver
+          dbt_task:
+            commands:
+              - dbt build --select path:models/gold --vars '{"silver_schema":"${var.silver_schema}"}'
+            project_directory: ${workspace.file_path}/dbt
+            source: WORKSPACE
+            warehouse_id: 8543b9f58a337ad4
+            catalog: ${var.catalog}
+            schema: ${var.gold_schema}
+          environment_key: serverless
+      environments:
+        - environment_key: serverless
+          spec:
+            environment_version: "4"
+            dependencies:
+              - dbt-databricks==1.10.19
 
 targets:
   dev:
@@ -27,3 +80,18 @@ targets:
     workspace:
       host: https://dbc-f54300ec-ead8.cloud.databricks.com
       profile: DEFAULT
+
+  prod:
+    mode: production
+    workspace:
+      host: https://dbc-f54300ec-ead8.cloud.databricks.com
+      root_path: /Workspace/Users/gabriel.mendozareyes@posteo.de/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      bronze_schema: bronze_prod
+      silver_schema: silver_prod
+      gold_schema: gold_prod
+    resources:
+      jobs:
+        offer_pipeline:
+          run_as:
+            service_principal_name: f77d6762-155b-49e4-a789-7ead33fe0f8a

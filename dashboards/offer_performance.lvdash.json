@@ -1,0 +1,201 @@
+{
+  "datasets": [
+    {
+      "displayName": "Daily offer metrics",
+      "name": "daily_metrics",
+      "query": "WITH feed_cutoff AS (SELECT MAX(ingest_ts) AS max_ingest_ts FROM workspace.silver.events) SELECT day, country, platform, installs, app_open_users, offer_view_users, offer_start_users, goal_reached_users, reward_paid_users, reward_payouts, reward_cost_eur, CASE WHEN day >= DATE_SUB(TO_DATE(max_ingest_ts), 5) THEN 'Recent - provisional' ELSE 'Earlier' END AS data_status FROM workspace.gold.daily_metrics CROSS JOIN feed_cutoff"
+    }
+  ],
+  "pages": [
+    {
+      "displayName": "Offer performance",
+      "name": "overview",
+      "layout": [
+        {
+          "position": {"height": 1, "width": 6, "x": 0, "y": 0},
+          "widget": {
+            "name": "title",
+            "textbox_spec": "# Rewarded Offer Performance\nDaily UTC metrics from `workspace.gold.daily_metrics`"
+          }
+        },
+        {
+          "position": {"height": 1, "width": 2, "x": 0, "y": 1},
+          "widget": {
+            "name": "country_filter",
+            "queries": [{"name": "country_filter_query", "query": {"datasetName": "daily_metrics", "disaggregated": false, "fields": [{"expression": "`country`", "name": "country"}, {"expression": "COUNT_IF(`associative_filter_predicate_group`)", "name": "country_associativity"}]}}],
+            "spec": {
+              "encodings": {"fields": [{"displayName": "Country", "fieldName": "country", "queryName": "country_filter_query"}]},
+              "frame": {"showTitle": true, "title": "Country"},
+              "version": 2,
+              "widgetType": "filter-multi-select"
+            }
+          }
+        },
+        {
+          "position": {"height": 1, "width": 2, "x": 2, "y": 1},
+          "widget": {
+            "name": "platform_filter",
+            "queries": [{"name": "platform_filter_query", "query": {"datasetName": "daily_metrics", "disaggregated": false, "fields": [{"expression": "`platform`", "name": "platform"}, {"expression": "COUNT_IF(`associative_filter_predicate_group`)", "name": "platform_associativity"}]}}],
+            "spec": {
+              "encodings": {"fields": [{"displayName": "Platform", "fieldName": "platform", "queryName": "platform_filter_query"}]},
+              "frame": {"showTitle": true, "title": "Platform"},
+              "version": 2,
+              "widgetType": "filter-multi-select"
+            }
+          }
+        },
+        {
+          "position": {"height": 2, "width": 2, "x": 0, "y": 2},
+          "widget": {
+            "name": "total_installs",
+            "queries": [{"name": "main_query", "query": {"datasetName": "daily_metrics", "disaggregated": false, "fields": [{"expression": "SUM(`installs`)", "name": "installs"}]}}],
+            "spec": {
+              "encodings": {"value": {"displayName": "Installs (count)", "fieldName": "installs"}},
+              "frame": {"showTitle": true, "title": "Total Installs (count)"},
+              "version": 2,
+              "widgetType": "counter"
+            }
+          }
+        },
+        {
+          "position": {"height": 2, "width": 2, "x": 2, "y": 2},
+          "widget": {
+            "name": "total_payouts",
+            "queries": [{"name": "main_query", "query": {"datasetName": "daily_metrics", "disaggregated": false, "fields": [{"expression": "SUM(`reward_payouts`)", "name": "reward_payouts"}]}}],
+            "spec": {
+              "encodings": {"value": {"displayName": "Reward payouts (events)", "fieldName": "reward_payouts"}},
+              "frame": {"showTitle": true, "title": "Reward Payouts (events)"},
+              "version": 2,
+              "widgetType": "counter"
+            }
+          }
+        },
+        {
+          "position": {"height": 2, "width": 2, "x": 4, "y": 2},
+          "widget": {
+            "name": "total_reward_cost",
+            "queries": [{"name": "main_query", "query": {"datasetName": "daily_metrics", "disaggregated": false, "fields": [{"expression": "SUM(`reward_cost_eur`)", "name": "reward_cost_eur"}]}}],
+            "spec": {
+              "encodings": {"value": {"displayName": "Reward cost (EUR)", "fieldName": "reward_cost_eur"}},
+              "frame": {"showTitle": true, "title": "Reward Cost (EUR)"},
+              "version": 2,
+              "widgetType": "counter"
+            }
+          }
+        },
+        {
+          "position": {"height": 1, "width": 2, "x": 0, "y": 4},
+          "widget": {
+            "name": "cost_per_install",
+            "queries": [{"name": "main_query", "query": {"datasetName": "daily_metrics", "disaggregated": false, "fields": [{"expression": "SUM(`reward_cost_eur`) / NULLIF(SUM(`installs`), 0)", "name": "cost_per_install"}]}}],
+            "spec": {
+              "encodings": {"value": {"displayName": "EUR / install", "fieldName": "cost_per_install"}},
+              "frame": {"showTitle": true, "title": "Cost per Install (EUR/install)"},
+              "version": 2,
+              "widgetType": "counter"
+            }
+          }
+        },
+        {
+          "position": {"height": 1, "width": 2, "x": 2, "y": 4},
+          "widget": {
+            "name": "cost_per_reward",
+            "queries": [{"name": "main_query", "query": {"datasetName": "daily_metrics", "disaggregated": false, "fields": [{"expression": "SUM(`reward_cost_eur`) / NULLIF(SUM(`reward_payouts`), 0)", "name": "cost_per_reward"}]}}],
+            "spec": {
+              "encodings": {"value": {"displayName": "EUR / payout", "fieldName": "cost_per_reward"}},
+              "frame": {"showTitle": true, "title": "Cost per Reward (EUR/payout)"},
+              "version": 2,
+              "widgetType": "counter"
+            }
+          }
+        },
+        {
+          "position": {"height": 4, "width": 2, "x": 0, "y": 5},
+          "widget": {
+            "name": "daily_installs",
+            "queries": [{"name": "main_query", "query": {"datasetName": "daily_metrics", "disaggregated": false, "fields": [{"expression": "`day`", "name": "day"}, {"expression": "`data_status`", "name": "data_status"}, {"expression": "SUM(`installs`)", "name": "installs"}]}}],
+            "spec": {
+              "encodings": {
+                "color": {"displayName": "Data status", "fieldName": "data_status", "scale": {"type": "categorical"}},
+                "x": {"displayName": "Day (UTC)", "fieldName": "day", "scale": {"type": "temporal"}},
+                "y": {"displayName": "Installs (count)", "fieldName": "installs", "scale": {"type": "quantitative"}}
+              },
+              "mark": {"colors": ["#077A9D", "#919191"]},
+              "frame": {"showTitle": true, "title": "Daily Installs (count/day, UTC)"},
+              "version": 3,
+              "widgetType": "line"
+            }
+          }
+        },
+        {
+          "position": {"height": 4, "width": 2, "x": 2, "y": 5},
+          "widget": {
+            "name": "daily_reward_cost",
+            "queries": [{"name": "main_query", "query": {"datasetName": "daily_metrics", "disaggregated": false, "fields": [{"expression": "`day`", "name": "day"}, {"expression": "`data_status`", "name": "data_status"}, {"expression": "SUM(`reward_cost_eur`)", "name": "reward_cost_eur"}]}}],
+            "spec": {
+              "encodings": {
+                "color": {"displayName": "Data status", "fieldName": "data_status", "scale": {"type": "categorical"}},
+                "x": {"displayName": "Day (UTC)", "fieldName": "day", "scale": {"type": "temporal"}},
+                "y": {"displayName": "EUR", "fieldName": "reward_cost_eur", "scale": {"type": "quantitative"}}
+              },
+              "mark": {"colors": ["#077A9D", "#919191"]},
+              "frame": {"showTitle": true, "title": "Daily Reward Cost (EUR/day, UTC)"},
+              "version": 3,
+              "widgetType": "line"
+            }
+          }
+        },
+        {
+          "position": {"height": 4, "width": 2, "x": 4, "y": 5},
+          "widget": {
+            "name": "daily_rewarded_users",
+            "queries": [{"name": "main_query", "query": {"datasetName": "daily_metrics", "disaggregated": false, "fields": [{"expression": "`day`", "name": "day"}, {"expression": "`data_status`", "name": "data_status"}, {"expression": "SUM(`reward_paid_users`)", "name": "reward_paid_users"}]}}],
+            "spec": {
+              "encodings": {
+                "color": {"displayName": "Data status", "fieldName": "data_status", "scale": {"type": "categorical"}},
+                "x": {"displayName": "Day (UTC)", "fieldName": "day", "scale": {"type": "temporal"}},
+                "y": {"displayName": "Unique users", "fieldName": "reward_paid_users", "scale": {"type": "quantitative"}}
+              },
+              "mark": {"colors": ["#077A9D", "#919191"]},
+              "frame": {"showTitle": true, "title": "Daily Rewarded Users (unique users/day, UTC)"},
+              "version": 3,
+              "widgetType": "line"
+            }
+          }
+        },
+        {
+          "position": {"height": 5, "width": 3, "x": 0, "y": 9},
+          "widget": {
+            "name": "cost_by_country",
+            "queries": [{"name": "main_query", "query": {"datasetName": "daily_metrics", "disaggregated": false, "fields": [{"expression": "`country`", "name": "country"}, {"expression": "SUM(`reward_cost_eur`)", "name": "reward_cost_eur"}]}}],
+            "spec": {
+              "encodings": {
+                "x": {"displayName": "Country", "fieldName": "country", "scale": {"type": "categorical"}},
+                "y": {"displayName": "Reward cost (EUR)", "fieldName": "reward_cost_eur", "scale": {"type": "quantitative"}}
+              },
+              "frame": {"showTitle": true, "title": "Reward Cost by Country (EUR)"},
+              "version": 3,
+              "widgetType": "bar"
+            }
+          }
+        },
+        {
+          "position": {"height": 5, "width": 3, "x": 3, "y": 9},
+          "widget": {
+            "name": "cost_by_platform",
+            "queries": [{"name": "main_query", "query": {"datasetName": "daily_metrics", "disaggregated": false, "fields": [{"expression": "`platform`", "name": "platform"}, {"expression": "SUM(`reward_cost_eur`)", "name": "reward_cost_eur"}]}}],
+            "spec": {
+              "encodings": {
+                "x": {"displayName": "Platform", "fieldName": "platform", "scale": {"type": "categorical"}},
+                "y": {"displayName": "Reward cost (EUR)", "fieldName": "reward_cost_eur", "scale": {"type": "quantitative"}}
+              },
+              "frame": {"showTitle": true, "title": "Reward Cost by Platform (EUR)"},
+              "version": 3,
+              "widgetType": "bar"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
