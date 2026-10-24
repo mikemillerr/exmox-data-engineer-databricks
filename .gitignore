@@ -1,0 +1,18 @@
+.DS_Store
+
+# Terraform local files and state
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Local configuration and credentials
+terraform.tfvars
+*.auto.tfvars
+.env
+.env.*
+
+# Keep shareable examples
+!terraform.tfvars.example
+!.env.example

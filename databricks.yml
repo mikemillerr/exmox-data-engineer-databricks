@@ -1,0 +1,29 @@
+bundle:
+  name: exmox-data-engineer
+
+variables:
+  catalog:
+    default: workspace
+  schema:
+    default: offer_pipeline
+
+resources:
+  pipelines:
+    bronze_ingestion:
+      name: exmox-bronze-ingestion
+      catalog: ${var.catalog}
+      schema: bronze
+      serverless: true
+      configuration:
+        landing_path: /Volumes/${var.catalog}/${var.schema}/landing
+      libraries:
+        - file:
+            path: src/bronze_ingestion.py
+
+targets:
+  dev:
+    default: true
+    mode: development
+    workspace:
+      host: https://dbc-f54300ec-ead8.cloud.databricks.com
+      profile: DEFAULT

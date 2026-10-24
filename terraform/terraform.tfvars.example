@@ -1,0 +1,16 @@
+# Copy this file to terraform.tfvars and replace the account ID.
+databricks_account_id = "00000000-0000-0000-0000-000000000000"
+
+workspace_name = "exmox-data-engineer"
+name_prefix    = "exmox-data-engineer"
+aws_region     = "eu-central-1"
+
+# One NAT gateway is used to keep costs down; compute clusters are not created.
+vpc_cidr = "10.20.0.0/20"
+
+tags = {
+  Environment = "dev"
+}
+
+# Keep false during normal use. Empty the root bucket before terraform destroy.
+root_bucket_force_destroy = false
