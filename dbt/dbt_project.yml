@@ -5,3 +5,7 @@ profile: exmox_data_engineer
 
 model-paths: ["models"]
 test-paths: ["tests"]
+
+vars:
+  bronze_schema: bronze
+  silver_schema: silver

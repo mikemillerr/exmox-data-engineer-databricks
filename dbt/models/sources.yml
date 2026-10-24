@@ -3,7 +3,7 @@ version: 2
 sources:
   - name: bronze
     database: workspace
-    schema: bronze
+    schema: "{{ var('bronze_schema') }}"
     tables:
       - name: installs
       - name: events
@@ -12,7 +12,7 @@ sources:
 
   - name: silver
     database: workspace
-    schema: silver
+    schema: "{{ var('silver_schema') }}"
     tables:
       - name: installs
       - name: events
