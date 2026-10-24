@@ -2,7 +2,7 @@
 
 ## Environment
 
-I used an existing Databricks Free Edition workspace with serverless compute and Unity Catalog. Terraform was not needed. A new catalog with default storage required UI setup, so I used the existing managed `workspace` catalog. Development uses `bronze`, `silver`, and `gold`; production uses isolated `bronze_prod`, `silver_prod`, and `gold_prod` schemas.
+I used an existing standard Databricks workspace with $400 of promotional credits, serverless compute, and Unity Catalog. Terraform was not needed. A new catalog with default storage required UI setup, so I used the existing managed `workspace` catalog. Development uses `bronze`, `silver`, and `gold`; production uses isolated `bronze_prod`, `silver_prod`, and `gold_prod` schemas.
 
 The production job and DLT pipeline run as `sp-exmox-offer-pipeline`. Initial service-principal creation and grants were performed once and are not fully codified in the bundle.
 
@@ -56,7 +56,7 @@ The dashboard is `dashboards/offer_performance.lvdash.json`. Deploying creates/u
 
 ## Metrics and verification
 
-Days are UTC. Installs use `install_ts`; event metrics use `event_ts`, never `ingest_ts`. Country and platform come from the user's install. Reward payouts are deduplicated `reward_paid` events, and reward cost is the sum of their current `offers.payout_eur` values.
+Source timestamps have no timezone and are assumed to be UTC; daily boundaries are derived using that assumption. A short time-of-day analysis did not provide evidence for a different timezone. Installs use `install_ts`; event metrics use `event_ts`, never `ingest_ts`. Country and platform come from the user's install. Reward payouts are deduplicated `reward_paid` events, and reward cost is the sum of their current `offers.payout_eur` values.
 
 Silver applies 34 tests and gold applies 7 tests covering keys, domains, references, timestamp rules, gold-grain uniqueness, and install/reward reconciliation. All passed in the deployed jobs. Repeated runs produced no duplicate rows or changed totals.
 
@@ -111,19 +111,16 @@ Unity Catalog governance should use one least-privilege SP per pipeline, analyst
 
 ## How it can silently produce wrong numbers
 
-- New invalid values are filtered without rejection-count monitoring.
-- Events rejected for a missing offer/install are not automatically retried when that dimension arrives later.
-- Offer payout changes do not currently trigger historical gold recomputation; using current payouts also lacks as-of semantics.
+- New invalid values are filtered without rejection-count monitoring—for example, a new country outside the contract's accepted set.
 - Replaced files, source deletes, or checkpoint resets can produce stale or duplicated input.
 - Source deletes/corrections do not remove obsolete gold merge keys.
 - Different session timezones can change daily boundaries unless UTC is enforced.
-- Daily distinct-user counts are not additive across days.
 - Reconciliation tests can share the same faulty assumptions as the transformation; passing tests is not proof of complete input.
 
 ## How I worked with AI
 
 I used **Kimi K3.1 Pro through OpenRouter in OpenCode**. I sketched the architecture, then worked layer by layer: discuss and challenge the next step, implement it, run it, and inspect the result. Work was sequential rather than parallel. A separate session will be used to challenge the output independently.
 
-I kept the managed-volume/DLT bronze design, dbt transformations/tests, one-DAB orchestration, and the dashboard. I rejected unnecessary DQX/SCD2 complexity, separate bundles per step, current-data partitioning, country repair, and the confidently suggested 72-hour timestamp repair because it confused late arrival with clock skew. I also challenged the claims that AutoLoader checkpoints or dbt snapshots alone provide end-to-end idempotency.
+I kept the managed-volume/DLT bronze design, dbt transformations/tests, one-DAB orchestration, and the dashboard. I rejected unnecessary DQX/SCD2 complexity, separate bundles per step, current-data partitioning, country repair, and the confidently suggested 72-hour timestamp repair because it confused late arrival with clock skew.
 
-Review caught issues I would not accept blindly: dashboard units first changed invisible labels rather than visible titles, and job `run_as` did not change the DLT owner. The second was found by inspecting `run_as_user_name` and fixed by deploying prod as the SP. Existing workspace infrastructure meant no Terraform was used.
+Review caught issues I would not accept blindly: dashboard units first changed invisible labels rather than visible titles, and job `run_as` did not change the DLT owner. The second was found by inspecting `run_as_user_name` and fixed by deploying prod as the SP.
