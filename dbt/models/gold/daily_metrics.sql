@@ -28,7 +28,7 @@ affected_keys as (
     from source_rows
     {% if is_incremental() or var("gold_date", none) %}
     where 1 = 1
-      {% if is_incremental() %}
+      {% if is_incremental() and not var("gold_date", none) %}
       and source_loaded_at >= coalesce(
           (select max(source_watermark) from {{ this }}),
           timestamp "1900-01-01 00:00:00"

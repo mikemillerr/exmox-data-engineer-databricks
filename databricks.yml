@@ -12,6 +12,10 @@ variables:
     default: silver
   gold_schema:
     default: gold
+  warehouse_id:
+    default: 8543b9f58a337ad4
+  service_principal:
+    default: f77d6762-155b-49e4-a789-7ead33fe0f8a
 
 resources:
   pipelines:
@@ -22,6 +26,7 @@ resources:
       serverless: true
       configuration:
         landing_path: /Volumes/${var.catalog}/${var.schema}/landing
+        spark.sql.session.timeZone: UTC
       libraries:
         - file:
             path: src/bronze_ingestion.py
@@ -30,7 +35,7 @@ resources:
     offer_performance:
       display_name: Exmox Offer Performance
       file_path: dashboards/offer_performance.lvdash.json
-      warehouse_id: 8543b9f58a337ad4
+      warehouse_id: ${var.warehouse_id}
       parent_path: ${workspace.file_path}
       embed_credentials: false
 
@@ -50,7 +55,7 @@ resources:
               - dbt build --select path:models/silver --vars '{"bronze_schema":"${var.bronze_schema}"}'
             project_directory: ${workspace.file_path}/dbt
             source: WORKSPACE
-            warehouse_id: 8543b9f58a337ad4
+            warehouse_id: ${var.warehouse_id}
             catalog: ${var.catalog}
             schema: ${var.silver_schema}
           environment_key: serverless
@@ -62,7 +67,7 @@ resources:
               - dbt build --select path:models/gold --vars '{"silver_schema":"${var.silver_schema}"}'
             project_directory: ${workspace.file_path}/dbt
             source: WORKSPACE
-            warehouse_id: 8543b9f58a337ad4
+            warehouse_id: ${var.warehouse_id}
             catalog: ${var.catalog}
             schema: ${var.gold_schema}
           environment_key: serverless
@@ -94,4 +99,4 @@ targets:
       jobs:
         offer_pipeline:
           run_as:
-            service_principal_name: f77d6762-155b-49e4-a789-7ead33fe0f8a
+            service_principal_name: ${var.service_principal}

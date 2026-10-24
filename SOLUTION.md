@@ -23,7 +23,7 @@ flowchart LR
     J -. then .-> E
 ```
 
-One DAB deploys the pipeline, job, and dashboard. The job tasks are `ingest_bronze → transform_silver → transform_gold`. I chose one bundle because the stages share deployment variables and do not have independent owners or release cycles.
+One DAB deploys the pipeline, job, and dashboard. The job tasks are `ingest_bronze → transform_silver → transform_gold`. I chose one bundle because the stages share deployment variables and do not have independent owners or release cycles. Inputs are treated as append-only; updates and deletes are outside the current contract.
 
 ## How to run
 
@@ -56,9 +56,11 @@ The dashboard is `dashboards/offer_performance.lvdash.json`. Deploying creates/u
 
 ## Metrics and verification
 
-Source timestamps have no timezone and are assumed to be UTC; daily boundaries are derived using that assumption. A short time-of-day analysis did not provide evidence for a different timezone. Installs use `install_ts`; event metrics use `event_ts`, never `ingest_ts`. Country and platform come from the user's install. Reward payouts are deduplicated `reward_paid` events, and reward cost is the sum of their current `offers.payout_eur` values.
+Source timestamps have no timezone and are assumed to be UTC; daily boundaries are derived using that assumption. UTC is also enforced for DLT and dbt sessions. A short time-of-day analysis did not provide evidence for a different timezone. Installs use `install_ts`; event metrics use `event_ts`, never `ingest_ts`. Country and platform come from the user's install. Reward payouts are deduplicated `reward_paid` events, and reward cost is the sum of their current `offers.payout_eur` values.
 
-Silver applies 34 tests and gold applies 7 tests covering keys, domains, references, timestamp rules, gold-grain uniqueness, and install/reward reconciliation. All passed in the deployed jobs. Repeated runs produced no duplicate rows or changed totals.
+Silver applies 34 tests and gold applies 8 tests covering keys, domains, references, timestamp rules, gold-grain uniqueness, non-emptiness, and install/reward reconciliation. All 42 passed in the latest deployed dev and prod jobs. Repeated runs produced no duplicate rows or changed totals.
+
+Failure-oriented checks were also run in dev: a deliberately corrupted historical gold row was restored by the `gold_date` rebuild, and a deliberately later duplicate `ingest_ts` was corrected back to the earliest bronze ingestion by the incremental silver merge.
 
 | Result | Count/value |
 |---|---:|
