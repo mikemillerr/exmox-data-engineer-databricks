@@ -7,4 +7,5 @@ actual as (
 select *
 from expected e
 inner join actual a on true
-where e.value != a.value
+where a.value is null
+   or e.value != a.value

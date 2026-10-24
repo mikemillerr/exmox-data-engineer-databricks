@@ -8,7 +8,37 @@ with incoming as (
     select *
     from {{ source("bronze", "events") }}
     {% if is_incremental() %}
-    where _loaded_at >= (select max(_loaded_at) from {{ this }})
+    where _loaded_at >= coalesce(
+        (select max(_loaded_at) from {{ this }}),
+        timestamp "1900-01-01 00:00:00"
+    )
+    {% endif %}
+),
+
+candidates as (
+    select
+        user_id,
+        event_ts,
+        event_name,
+        offer_id,
+        event_id,
+        ingest_ts,
+        _loaded_at,
+        _source_file
+    from incoming
+    {% if is_incremental() %}
+    union all
+    select
+        user_id,
+        event_ts,
+        event_name,
+        offer_id,
+        event_id,
+        ingest_ts,
+        _loaded_at,
+        null as _source_file
+    from {{ this }}
+    where event_id in (select event_id from incoming)
     {% endif %}
 ),
 
@@ -19,7 +49,7 @@ deduplicated as (
             partition by event_id
             order by ingest_ts, _loaded_at, _source_file
         ) as event_version
-    from incoming
+    from candidates
 )
 
 select

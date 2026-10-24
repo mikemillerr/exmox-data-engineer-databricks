@@ -30,7 +30,7 @@ Key behavior:
 - Idempotent reruns and incremental event/gold merges.
 - Historical gold-day recomputation when late events arrive.
 - UTC event/install dates and documented cleaning rules.
-- 41 dbt tests covering contracts, references, uniqueness, and reconciliation.
+- 42 dbt tests covering contracts, references, uniqueness, non-emptiness, and reconciliation.
 
 ## Documentation
 

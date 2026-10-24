@@ -15,5 +15,7 @@ actual as (
 select *
 from expected e
 inner join actual a on true
-where e.payouts != a.payouts
+where a.payouts is null
+   or a.cost_eur is null
+   or e.payouts != a.payouts
    or e.cost_eur != a.cost_eur
