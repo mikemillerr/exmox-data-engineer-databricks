@@ -12,6 +12,7 @@ crash.*.log
 dbt/target/
 dbt/logs/
 dbt/dbt_packages/
+dbt/.user.yml
 
 # Local configuration and credentials
 terraform.tfvars
