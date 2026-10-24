@@ -1,0 +1,100 @@
+version: 2
+
+models:
+  - name: installs
+    tests:
+      - is_valid:
+          condition: "user_id rlike '^u_[0-9]{6}$'"
+      - is_valid:
+          condition: "(media_source = 'organic' and campaign_id is null) or (media_source != 'organic' and campaign_id rlike '^cmp_[0-9]{3}$')"
+    columns:
+      - name: user_id
+        tests: [unique, not_null]
+      - name: install_ts
+        tests: [not_null]
+      - name: country
+        tests:
+          - accepted_values:
+              values: ["BR", "DE", "FR", "GB", "IN", "PL", "TR", "US"]
+      - name: platform
+        tests:
+          - accepted_values:
+              values: ["android", "ios"]
+      - name: media_source
+        tests:
+          - accepted_values:
+              values: ["applovin", "meta", "tiktok", "unity", "organic"]
+
+  - name: offers
+    columns:
+      - name: offer_id
+        tests:
+          - unique
+          - not_null
+          - is_valid:
+              condition: "offer_id rlike '^of_[0-9]{4}$'"
+      - name: offer_category
+        tests:
+          - accepted_values:
+              values: ["casino", "casual", "puzzle", "rpg", "strategy"]
+      - name: payout_type
+        tests:
+          - accepted_values:
+              values: ["cpa", "cpe", "cpi"]
+      - name: payout_eur
+        tests:
+          - is_valid:
+              condition: "payout_eur > 0"
+
+  - name: events
+    tests:
+      - is_valid:
+          condition: "ingest_ts >= event_ts"
+    columns:
+      - name: event_id
+        tests: [unique, not_null]
+      - name: user_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('installs')
+              field: user_id
+      - name: event_ts
+        tests: [not_null]
+      - name: ingest_ts
+        tests: [not_null]
+      - name: event_name
+        tests:
+          - accepted_values:
+              values: ["app_open", "offer_view", "offer_start", "goal_reached", "reward_paid"]
+      - name: offer_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('offers')
+              field: offer_id
+
+  - name: user_profile
+    tests:
+      - is_valid:
+          condition: "not is_payer or revenue_30d_eur > 0"
+    columns:
+      - name: user_id
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('installs')
+              field: user_id
+      - name: events_lifetime
+        tests:
+          - is_valid:
+              condition: "events_lifetime >= 1"
+      - name: last_seen_ts
+        tests: [not_null]
+      - name: revenue_30d_eur
+        tests:
+          - is_valid:
+              condition: "revenue_30d_eur >= 0"
+      - name: is_payer
+        tests: [not_null]

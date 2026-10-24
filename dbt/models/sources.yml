@@ -1,0 +1,19 @@
+version: 2
+
+sources:
+  - name: bronze
+    database: workspace
+    schema: bronze
+    tables:
+      - name: installs
+      - name: events
+      - name: offers
+      - name: user_profile
+
+  - name: silver
+    database: workspace
+    schema: silver
+    tables:
+      - name: installs
+      - name: events
+      - name: offers

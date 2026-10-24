@@ -7,6 +7,12 @@
 crash.log
 crash.*.log
 
+# Python and dbt local artifacts
+.venv/
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+
 # Local configuration and credentials
 terraform.tfvars
 *.auto.tfvars
