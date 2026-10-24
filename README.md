@@ -29,7 +29,7 @@ Key behavior:
 
 - Idempotent reruns and incremental event/gold merges.
 - Historical gold-day recomputation when late events arrive.
-- UTC event/install dates and documented reject-only cleaning rules.
+- UTC event/install dates and documented cleaning rules.
 - 41 dbt tests covering contracts, references, uniqueness, and reconciliation.
 
 ## Documentation

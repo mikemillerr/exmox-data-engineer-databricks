@@ -63,20 +63,20 @@ Silver applies 34 tests and gold applies 7 tests covering keys, domains, referen
 | Result | Count/value |
 |---|---:|
 | Bronze installs / events / offers / profiles | 40,000 / 435,907 / 180 / 40,000 |
-| Silver installs / events / offers / profiles | 38,410 / 390,583 / 180 / 38,410 |
+| Silver installs / events / offers / profiles | 40,000 / 407,013 / 180 / 40,000 |
 | Gold rows | 960 |
-| Gold installs | 38,410 |
-| Gold reward payouts | 9,419 |
-| Gold reward cost | €25,372.29 |
+| Gold installs | 40,000 |
+| Gold reward payouts | 9,820 |
+| Gold reward cost | €26,445.09 |
 
-The final prod run also passed with 435,907 bronze events, 390,583 silver events, and 960 gold rows.
+The final prod run also passed with 435,907 bronze events, 407,013 silver events, and 960 gold rows.
 
 ## Data findings and decisions
 
 | Finding | Decision |
 |---|---|
 | 12,721 duplicated event IDs; business fields match, only `ingest_ts` differs | Keep the earliest ingestion and enforce uniqueness in silver. |
-| 1,590 noncanonical countries such as `de ` | Drop under the agreed reject-only scope; do not repair. |
+| 1,590 noncanonical countries such as `de ` | Normalize with `UPPER(TRIM(country))` and retain the installs. |
 | 13,672 raw events reference six unknown offers | Drop through the offer reference rule. None are `reward_paid`, so known reward cost is complete for this input. |
 | 3,094 raw events precede their install | Drop; no evidence supports repairing either timestamp. |
 | More than 10,900 events arrive over 24 hours late; maximum observed lag is about 134 hours | Preserve timestamps and restate affected gold days. Never shift event time by a fixed lag. |
@@ -121,6 +121,6 @@ Unity Catalog governance should use one least-privilege SP per pipeline, analyst
 
 I used **Kimi K3.1 Pro through OpenRouter in OpenCode**. I sketched the architecture, then worked layer by layer: discuss and challenge the next step, implement it, run it, and inspect the result. Work was sequential rather than parallel. A separate session will be used to challenge the output independently.
 
-I kept the managed-volume/DLT bronze design, dbt transformations/tests, one-DAB orchestration, and the dashboard. I rejected unnecessary DQX/SCD2 complexity, separate bundles per step, current-data partitioning, country repair, and the confidently suggested 72-hour timestamp repair because it confused late arrival with clock skew.
+I kept the managed-volume/DLT bronze design, dbt transformations/tests, one-DAB orchestration, deterministic country normalization, and the dashboard. I rejected unnecessary DQX/SCD2 complexity, separate bundles per step, current-data partitioning, and the confidently suggested 72-hour timestamp repair because it confused late arrival with clock skew.
 
 Review caught issues I would not accept blindly: dashboard units first changed invisible labels rather than visible titles, and job `run_as` did not change the DLT owner. The second was found by inspecting `run_as_user_name` and fixed by deploying prod as the SP.
